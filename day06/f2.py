@@ -58,18 +58,21 @@ def traversial(map, starting_pos):
     return map, status
 
 
-print(np.count_nonzero(traversial(guard_map, starting_pos)[0] == "X"))  # part 1
+original_traversial, _ = traversial(guard_map, starting_pos)
+ii, jj = np.where(original_traversial == "X")
+print(len(ii))  # part 1
+
 
 loop_count = 0
-for i in range(guard_map.shape[0]):
-    for j in range(guard_map.shape[1]):
-        if i == starting_pos[0] and j == starting_pos[1]:
-            continue
-        new_map = guard_map.copy()
-        new_map[i, j] = "#"
-        result_map, status = traversial(new_map, starting_pos)
-        if status == "loop":
-            loop_count += 1
+for idx in range(len(ii)):
+    i, j = ii[idx], jj[idx]
+    if i == starting_pos[0] and j == starting_pos[1]:
+        continue
+    new_map = guard_map.copy()
+    new_map[i, j] = "#"
+    result_map, status = traversial(new_map, starting_pos)
+    if status == "loop":
+        loop_count += 1
 
 print(loop_count)
-print(time.time() - t0)  # 64s
+print(time.time() - t0)  # 64s -> 14s
