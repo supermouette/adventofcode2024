@@ -7,53 +7,49 @@ with open("input.txt") as f:
     lines = [[c for c in l.strip("\n")] for l in f.readlines()]
 
 guard_map = np.array(lines)
+guard_map_shape = guard_map.shape
 
-move_direction = {"up": (-1, 0), "left": (0, -1), "down": (1, 0), "right": (0, 1)}
-directions = ["up", "right", "down", "left"]
+move_direction = {0: (-1, 0), 3: (0, -1), 2: (1, 0), 1: (0, 1)}
 
 a, b = np.where(guard_map == "^")
 starting_pos = a[0], b[0]
 
 
-def in_bound(pos):
-    return (
-        pos[0] >= 0
-        and pos[1] >= 0
-        and pos[1] < guard_map.shape[0]
-        and pos[0] < guard_map.shape[1]
-    )
-
-
-def traversial(map, starting_pos):
+def traversial(map, starting_pos, first_try=True):
     current_direction = 0
     pos = starting_pos
 
     pos_dir = set()
     pos_dir.add((pos[0], pos[1], current_direction))
     status = "exited"
+    obstacles = set([(int(x), int(y)) for x, y in zip(*np.where(map == "#"))])
     while True:
-        map[pos] = "X"
-        move = move_direction[directions[current_direction]]
+        if first_try:
+            map[pos] = "X"
+        move = move_direction[current_direction]
         next_pos = pos[0] + move[0], pos[1] + move[1]
-        if not in_bound(next_pos):
+        if (
+            next_pos[0] < 0
+            or next_pos[1] < 0
+            or next_pos[1] >= guard_map_shape[0]
+            or next_pos[0] >= guard_map_shape[1]
+        ):
             break
         cpt = 0
-        while map[next_pos] == "#":
+        dir_change = False
+        while next_pos in obstacles:
+            dir_change = True
             current_direction = (current_direction + 1) % 4
-            move = move_direction[directions[current_direction]]
+            move = move_direction[current_direction]
             next_pos = pos[0] + move[0], pos[1] + move[1]
             cpt += 1
-            if cpt > 10:
-                print(pos)
-                print(map)
-                print("huuuu")
-                exit()
         pos = next_pos
-        cur_pos_dir = (pos[0], pos[1], current_direction)
-        if cur_pos_dir in pos_dir:
-            status = "loop"
-            break
-        pos_dir.add(cur_pos_dir)
+        if dir_change:
+            cur_pos_dir = (pos[0], pos[1], current_direction)
+            if cur_pos_dir in pos_dir:
+                status = "loop"
+                break
+            pos_dir.add(cur_pos_dir)
 
     return map, status
 
@@ -70,9 +66,9 @@ for idx in range(len(ii)):
         continue
     new_map = guard_map.copy()
     new_map[i, j] = "#"
-    result_map, status = traversial(new_map, starting_pos)
+    result_map, status = traversial(new_map, starting_pos, False)
     if status == "loop":
         loop_count += 1
 
 print(loop_count)
-print(time.time() - t0)  # 64s -> 14s
+print(time.time() - t0)  # 64s -> 14s -> 5.7s
